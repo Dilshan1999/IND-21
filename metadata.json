@@ -1,0 +1,6 @@
+{
+  "name": "New Interface Crypto Trading Chart",
+  "description": "A real-time cryptocurrency charting application displaying candlestick charts, technical indicators like MA, RSI, Bollinger Bands, and Elite Wave, with live data from Binance.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoChart Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class', // Keep 'class' strategy if Plotly chart or other parts need it
+      theme: {
+        extend: {
+          colors: {
+            // Professional Dark Theme Inspired Palette
+            pro_dark: {
+              bg: '#131722', 
+              bg_deep: '#0A0E15',
+              panel: '#1e222d', 
+              hover: '#2a2e39',
+              border: '#2a2e39', 
+              text: '#d1d4dc',   
+              text_secondary: '#787b86', 
+              accent: '#2962ff', 
+              accent_hover: '#1e53e5',
+              green: '#089981',  
+              red: '#f23645',    
+            },
+            // Professional Light Theme
+            pro_light: {
+              bg: '#ffffff',
+              panel: '#f0f2f5', // Slightly off-white for panels if needed
+              border: '#d1d4dc',
+              text: '#131722',
+              text_secondary: '#5d606b',
+              accent: '#2962ff',
+              green: '#089981',
+              red: '#f23645',
+            },
+            // New UI generic colors (can be overridden by specific component classes)
+            gray: {
+              ...tailwind.theme.colors.gray, // include default grays
+              750: '#2D3748', // Example: for new UI sub-menus
+              800: '#1F2937', // New UI main dark background color from user's code
+              900: '#111827', // New UI main dark background color from user's code (body)
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      /* Default to new UI's dark background */
+      background-color: #111827; /* bg-gray-900 */
+      color: #d1d4dc; /* Default text for dark theme */
+    }
+    /* If html has .dark, keep new UI dark. If not, use a light bg for compatibility if parts of old UI surface */
+    html.dark body {
+       background-color: #111827; /* bg-gray-900 */
+       color: #d1d4dc;
+    }
+    html:not(.dark) body {
+        /* Light theme for old components if they appear, new components are mostly dark-themed by default */
+        background-color: #f0f2f5; 
+        color: #131722;
+    }
+
+    /* Custom scrollbar for webkit browsers (styles adapted for new dark theme) */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    html.dark ::-webkit-scrollbar-track, ::-webkit-scrollbar-track { /* Apply dark scrollbar by default */
+      background: #1f2937; /* bg-gray-800 */
+    }
+    html:not(.dark) ::-webkit-scrollbar-track {
+      background: #e0e3eb; 
+    }
+    html.dark ::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb { /* Apply dark scrollbar by default */
+      background: #4a4e59; /* A mid-gray */
+      border-radius: 3px;
+    }
+    html:not(.dark) ::-webkit-scrollbar-thumb {
+      background: #a8aeba;
+      border-radius: 3px;
+    }
+    html.dark ::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:hover {
+      background: #5f636e;
+    }
+    html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+      background: #8c919c;
+    }
+    /* Basic focus outline for accessibility */
+    *:focus-visible {
+        outline: 2px solid #2962ff; /* Using existing accent blue */
+        outline-offset: 1px;
+    }
+    /* Tailwind scrollbar utilities */
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: #4a4e59 #1f2937; /* thumb track for dark */
+    }
+    html:not(.dark) .scrollbar-thin {
+        scrollbar-color: #a8aeba #e0e3eb; /* thumb track for light */
+    }
+
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.400.0",
+    "@google/genai": "https://esm.sh/@google/genai@^0.14.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
