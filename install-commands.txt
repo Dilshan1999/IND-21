@@ -1,0 +1,40 @@
+# Quick Install Commands for Crypto Trading Chart
+
+# ===========================================
+# ONE-COMMAND INSTALLATION
+# ===========================================
+npm install
+
+# ===========================================
+# MANUAL INSTALLATION (if needed)
+# ===========================================
+
+# Core Dependencies
+npm install react@^19.1.0
+npm install react-dom@^19.1.0
+npm install lucide-react@^0.400.0
+npm install lightweight-charts@^5.0.7
+npm install @google/genai@^0.14.0
+
+# Development Dependencies
+npm install --save-dev @types/node@^22.14.0
+npm install --save-dev @types/react@^19.0.0
+npm install --save-dev @types/react-dom@^19.0.0
+npm install --save-dev @vitejs/plugin-react@^4.5.1
+npm install --save-dev typescript@~5.7.2
+npm install --save-dev vite@^6.2.0
+
+# ===========================================
+# START THE APPLICATION
+# ===========================================
+npm run dev
+
+# ===========================================
+# BUILD FOR PRODUCTION
+# ===========================================
+npm run build
+
+# ===========================================
+# PREVIEW PRODUCTION BUILD
+# ===========================================
+npm run preview

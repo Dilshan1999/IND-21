@@ -1,0 +1,82 @@
+# Crypto Trading Chart - Requirements.txt
+# Complete package list for installation
+
+# ===========================================
+# SYSTEM REQUIREMENTS
+# ===========================================
+# Node.js: 18.0.0 or higher
+# npm: 9.0.0 or higher
+# TypeScript: 5.7.x
+
+# ===========================================
+# NPM PACKAGES TO INSTALL
+# ===========================================
+
+# ===== CORE REACT DEPENDENCIES =====
+react@^19.1.0
+react-dom@^19.1.0
+
+# ===== UI AND STYLING =====
+lucide-react@^0.400.0          # Icon library for UI components
+# Note: Tailwind CSS is loaded via CDN in index.html
+
+# ===== CHARTING AND DATA VISUALIZATION =====
+lightweight-charts@^5.0.7      # Professional trading chart library
+
+# ===== AI/ML INTEGRATION =====
+@google/genai@^0.14.0          # Google Generative AI for trading insights
+
+# ===== DEVELOPMENT DEPENDENCIES =====
+@types/node@^22.14.0           # Node.js type definitions
+@types/react@^19.0.0           # React type definitions  
+@types/react-dom@^19.0.0       # React DOM type definitions
+@vitejs/plugin-react@^4.5.1    # Vite React plugin
+typescript@~5.7.2              # TypeScript compiler
+vite@^6.2.0                    # Build tool and dev server
+
+# ===========================================
+# INSTALLATION COMMANDS
+# ===========================================
+
+# Install all production dependencies:
+# npm install react@^19.1.0 react-dom@^19.1.0 lucide-react@^0.400.0 lightweight-charts@^5.0.7 @google/genai@^0.14.0
+
+# Install all development dependencies:
+# npm install --save-dev @types/node@^22.14.0 @types/react@^19.0.0 @types/react-dom@^19.0.0 @vitejs/plugin-react@^4.5.1 typescript@~5.7.2 vite@^6.2.0
+
+# Or install everything at once:
+# npm install
+
+# ===========================================
+# GLOBAL TOOLS (OPTIONAL)
+# ===========================================
+# npm install -g typescript     # TypeScript compiler globally
+# npm install -g vite           # Vite CLI globally
+
+# ===========================================
+# API REQUIREMENTS
+# ===========================================
+# Environment Variables needed:
+# - GEMINI_API_KEY: For Google Generative AI features
+# - API access to Binance WebSocket streams (public, no key required)
+
+# ===========================================
+# BROWSER REQUIREMENTS
+# ===========================================
+# Chrome 90+
+# Firefox 88+
+# Safari 14+
+# Edge 90+
+# WebSocket support required for real-time data
+
+# ===========================================
+# ADDITIONAL NOTES
+# ===========================================
+# - This project uses Vite as the build tool
+# - Tailwind CSS is loaded via CDN (no npm install required)
+# - TypeScript is used throughout the project
+# - Real-time data comes from Binance WebSocket API
+# - Project includes TradingView-inspired UI components
+# - Supports both dark and light themes
+# - Includes technical indicators (MA, RSI, MACD, Bollinger Bands)
+# - AI-powered trading analysis via Google Gemini API
