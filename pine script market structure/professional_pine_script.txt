@@ -1,0 +1,346 @@
+//@version=5
+indicator("Professional Market Structure", shorttitle="PMS", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// =============================================================================
+// INPUTS
+// =============================================================================
+pivotLength = input.int(7, "Pivot Length", minval=3, maxval=20, tooltip="Number of bars on each side for pivot detection")
+minSwingPercent = input.float(0.5, "Minimum Swing %", minval=0.1, maxval=3.0, step=0.1, tooltip="Minimum percentage move to qualify as a swing")
+confirmationBars = input.int(1, "Confirmation Bars", minval=0, maxval=5, tooltip="Number of bars to wait for confirmation")
+
+// Structure Labels
+showStructureLabels = input.bool(true, "Show Structure Labels", group="Labels")
+showBreakLabels = input.bool(true, "Show Break Labels", group="Labels") 
+labelSize = input.string("small", "Label Size", options=["tiny", "small", "normal"], group="Labels")
+
+// Visual Elements
+showZigZag = input.bool(true, "Show Zig-Zag Lines", group="Visual")
+showBreakLines = input.bool(true, "Show Break Lines", group="Visual")
+showKeyLevels = input.bool(true, "Show Key Levels", group="Visual")
+
+// Colors
+colorBullishStructure = input.color(color.new(color.green, 0), "Bullish Structure", group="Colors")
+colorBearishStructure = input.color(color.new(color.red, 0), "Bearish Structure", group="Colors")
+colorBullishBreak = input.color(color.new(color.blue, 0), "Bullish Break", group="Colors")
+colorBearishBreak = input.color(color.new(color.orange, 0), "Bearish Break", group="Colors")
+colorNeutral = input.color(color.new(color.gray, 0), "Neutral", group="Colors")
+
+// =============================================================================
+// VARIABLES AND ARRAYS
+// =============================================================================
+type Point
+    int bar
+    int time  
+    float price
+    string label
+    bool isHigh
+    bool confirmed
+
+var array<Point> structurePoints = array.new<Point>()
+var array<line> zigzagLines = array.new<line>()
+var array<line> breakLines = array.new<line>()
+
+var Point lastHH = na
+var Point lastHL = na
+var Point lastLL = na
+var Point lastLH = na
+
+var int marketTrend = 0  // 1 = bullish, -1 = bearish, 0 = neutral
+var float lastBreakLevel = na
+var bool trendChanged = false
+
+// =============================================================================
+// FUNCTIONS
+// =============================================================================
+
+// Calculate percentage difference
+percentDiff(float val1, float val2) =>
+    math.abs((val2 - val1) / val1) * 100
+
+// Check if swing is significant
+isSignificantMove(float price1, float price2) =>
+    percentDiff(price1, price2) >= minSwingPercent
+
+// Get previous point of same type
+getPreviousPoint(string pointType) =>
+    Point result = na
+    size = array.size(structurePoints)
+    if size > 0
+        for i = size - 1 to 0
+            point = array.get(structurePoints, i)
+            if point.label == pointType and point.confirmed
+                result := point
+                break
+    result
+
+// Determine structure type for highs
+getHighStructureType(float price) =>
+    string result = na
+    
+    // Get previous highs
+    prevHH = getPreviousPoint("HH")
+    prevLH = getPreviousPoint("LH")
+    
+    // Determine based on comparison with previous points
+    if not na(prevHH)
+        if price > prevHH.price and isSignificantMove(prevHH.price, price)
+            result := "HH"
+        else if price < prevHH.price
+            result := "LH"
+    else if not na(prevLH)
+        if price > prevLH.price and isSignificantMove(prevLH.price, price)
+            result := "HH"
+        else
+            result := "LH"
+    else
+        // First high - assume based on overall trend
+        result := "HH"
+    
+    result
+
+// Determine structure type for lows  
+getLowStructureType(float price) =>
+    string result = na
+    
+    // Get previous lows
+    prevLL = getPreviousPoint("LL") 
+    prevHL = getPreviousPoint("HL")
+    
+    // Determine based on comparison with previous points
+    if not na(prevLL)
+        if price < prevLL.price and isSignificantMove(prevLL.price, price)
+            result := "LL"
+        else if price > prevLL.price
+            result := "HL"
+    else if not na(prevHL)
+        if price < prevHL.price and isSignificantMove(prevHL.price, price)
+            result := "LL"
+        else
+            result := "HL"
+    else
+        // First low - assume based on overall trend
+        result := "LL"
+    
+    result
+
+// Check for break of structure
+checkBreakOfStructure(Point newPoint) =>
+    string breakType = na
+    Point brokenPoint = na
+    
+    if newPoint.label == "HH"
+        // Check if breaking bearish structure
+        prevLH = getPreviousPoint("LH")
+        if not na(prevLH) and newPoint.price > prevLH.price
+            if marketTrend == -1
+                breakType := "CHoCH+"
+                trendChanged := true
+                marketTrend := 1
+            else
+                breakType := "BOS+"
+            brokenPoint := prevLH
+            
+    else if newPoint.label == "LL"
+        // Check if breaking bullish structure  
+        prevHL = getPreviousPoint("HL")
+        if not na(prevHL) and newPoint.price < prevHL.price
+            if marketTrend == 1
+                breakType := "CHoCH-"
+                trendChanged := true
+                marketTrend := -1
+            else
+                breakType := "BOS-"
+            brokenPoint := prevHL
+    
+    [breakType, brokenPoint]
+
+// Draw structure label
+drawLabel(Point point, color labelColor) =>
+    if showStructureLabels
+        size = switch labelSize
+            "tiny" => size.tiny
+            "small" => size.small  
+            "normal" => size.normal
+            => size.small
+            
+        style = point.isHigh ? label.style_label_down : label.style_label_up
+        yloc = point.isHigh ? yloc.abovebar : yloc.belowbar
+        
+        label.new(
+            x=point.time,
+            y=point.price, 
+            text=point.label,
+            color=labelColor,
+            textcolor=color.white,
+            style=style,
+            yloc=yloc,
+            size=size
+        )
+
+// Draw break label
+drawBreakLabel(Point point, string breakText, color breakColor) =>
+    if showBreakLabels
+        style = point.isHigh ? label.style_label_down : label.style_label_up
+        yloc = point.isHigh ? yloc.abovebar : yloc.belowbar
+        
+        label.new(
+            x=point.time,
+            y=point.price,
+            text=breakText, 
+            color=breakColor,
+            textcolor=color.white,
+            style=style,
+            yloc=yloc,
+            size=size.normal
+        )
+
+// Draw break line
+drawBreakLine(Point fromPoint, Point toPoint, color lineColor) =>
+    if showBreakLines and not na(fromPoint) and not na(toPoint)
+        newLine = line.new(
+            x1=fromPoint.time,
+            y1=fromPoint.price,
+            x2=toPoint.time, 
+            y2=fromPoint.price,
+            color=lineColor,
+            style=line.style_dashed,
+            width=2,
+            extend=extend.right
+        )
+        array.push(breakLines, newLine)
+
+// Clean up old lines
+cleanupLines(array<line> lineArray, int maxLines = 50) =>
+    while array.size(lineArray) > maxLines
+        oldLine = array.shift(lineArray)
+        line.delete(oldLine)
+
+// =============================================================================
+// MAIN LOGIC  
+// =============================================================================
+
+// Detect pivot points
+pivotHigh = ta.pivothigh(high, pivotLength, pivotLength)
+pivotLow = ta.pivotlow(low, pivotLength, pivotLength)
+
+// Process pivot highs
+if not na(pivotHigh)
+    pivotBar = bar_index[pivotLength]
+    pivotTime = time[pivotLength]
+    
+    // Determine structure type
+    structureType = getHighStructureType(pivotHigh)
+    
+    // Create point
+    newPoint = Point.new(
+        bar=pivotBar,
+        time=pivotTime,
+        price=pivotHigh,
+        label=structureType,
+        isHigh=true,
+        confirmed=bar_index >= pivotBar + confirmationBars
+    )
+    
+    // Add to array
+    array.push(structurePoints, newPoint)
+    
+    // Update references
+    if structureType == "HH"
+        lastHH := newPoint
+        structureColor = colorBullishStructure
+    else
+        lastLH := newPoint  
+        structureColor = colorBearishStructure
+    
+    // Draw structure label
+    drawLabel(newPoint, structureColor)
+    
+    // Check for breaks
+    [breakType, brokenPoint] = checkBreakOfStructure(newPoint)
+    if not na(breakType)
+        breakColor = str.contains(breakType, "+") ? colorBullishBreak : colorBearishBreak
+        drawBreakLabel(newPoint, breakType, breakColor)
+        drawBreakLine(brokenPoint, newPoint, breakColor)
+
+// Process pivot lows
+if not na(pivotLow)
+    pivotBar = bar_index[pivotLength]
+    pivotTime = time[pivotLength]
+    
+    // Determine structure type
+    structureType = getLowStructureType(pivotLow)
+    
+    // Create point
+    newPoint = Point.new(
+        bar=pivotBar,
+        time=pivotTime,
+        price=pivotLow,
+        label=structureType,
+        isHigh=false,
+        confirmed=bar_index >= pivotBar + confirmationBars
+    )
+    
+    // Add to array
+    array.push(structurePoints, newPoint)
+    
+    // Update references
+    if structureType == "LL"
+        lastLL := newPoint
+        structureColor = colorBearishStructure
+    else
+        lastHL := newPoint
+        structureColor = colorBullishStructure
+    
+    // Draw structure label
+    drawLabel(newPoint, structureColor)
+    
+    // Check for breaks
+    [breakType, brokenPoint] = checkBreakOfStructure(newPoint)
+    if not na(breakType)
+        breakColor = str.contains(breakType, "+") ? colorBullishBreak : colorBearishBreak
+        drawBreakLabel(newPoint, breakType, breakColor)
+        drawBreakLine(brokenPoint, newPoint, breakColor)
+
+// =============================================================================
+// ZIG-ZAG LINES
+// =============================================================================
+if showZigZag and array.size(structurePoints) >= 2
+    lastPoint = array.get(structurePoints, array.size(structurePoints) - 1)
+    secondLastPoint = array.get(structurePoints, array.size(structurePoints) - 2)
+    
+    lineColor = marketTrend == 1 ? color.new(colorBullishStructure, 70) :
+                marketTrend == -1 ? color.new(colorBearishStructure, 70) :
+                color.new(colorNeutral, 70)
+    
+    zigzagLine = line.new(
+        x1=secondLastPoint.time,
+        y1=secondLastPoint.price,
+        x2=lastPoint.time,
+        y2=lastPoint.price,
+        color=lineColor,
+        width=2
+    )
+    
+    array.push(zigzagLines, zigzagLine)
+
+// Cleanup arrays to prevent memory issues
+if array.size(structurePoints) > 100
+    array.shift(structurePoints)
+
+cleanupLines(zigzagLines, 50)
+cleanupLines(breakLines, 30)
+
+// =============================================================================
+// TREND TABLE
+// =============================================================================
+var table trendTable = table.new(position.top_right, 2, 2, bgcolor=color.new(color.white, 85), border_width=1)
+
+if barstate.islast
+    trendText = marketTrend == 1 ? "BULLISH" : marketTrend == -1 ? "BEARISH" : "NEUTRAL"
+    trendColor = marketTrend == 1 ? colorBullishStructure : marketTrend == -1 ? colorBearishStructure : colorNeutral
+    
+    table.cell(trendTable, 0, 0, "Market Trend:", text_color=color.black, text_size=size.small)
+    table.cell(trendTable, 1, 0, trendText, text_color=trendColor, text_size=size.small)
+    
+    table.cell(trendTable, 0, 1, "Total Swings:", text_color=color.black, text_size=size.small) 
+    table.cell(trendTable, 1, 1, str.tostring(array.size(structurePoints)), text_color=color.black, text_size=size.small)

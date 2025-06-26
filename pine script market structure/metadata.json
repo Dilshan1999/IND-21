@@ -1,0 +1,6 @@
+{
+  "name": "Pine Script Market Structure Visualizer",
+  "description": "A web application to display a Pine Script for TradingView that identifies market structure (HH, HL, LL, LH, BOS, CHoCH) and the AI prompt used for its generation.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
